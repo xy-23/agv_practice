@@ -1,6 +1,6 @@
 ### Build
 ```bash
-# create workspace
+# create workspace folder
 mkdir -p agv_ws/src
 cd agv_ws/src
 git clone https://github.com/xy-23/agv_practice.git
@@ -8,7 +8,7 @@ git clone https://github.com/xy-23/agv_practice.git
 # back to workspace folder
 cd ..
 
-# check dependecies
+# check dependencies
 rosdep install --from-paths src --ignore-src
 
 # build
