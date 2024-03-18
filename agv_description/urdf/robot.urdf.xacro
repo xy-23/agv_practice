@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="agv">
+
+    <xacro:include filename="inertial.xacro"/>
+    <xacro:include filename="materials.xacro"/>
+
+    <xacro:include filename="body.xacro" />
+    <xacro:include filename="lidar.xacro" />
+
+    <xacro:include filename="$(find agv_description)/gazebo/body.xacro" />
+    <xacro:include filename="$(find agv_description)/gazebo/lidar.xacro" />
+
+    <xacro:include filename="$(find agv_description)/gazebo/controller.xacro" />
+    <xacro:include filename="$(find agv_description)/ros2_control/gazebo_system.xacro" />
+    
+</robot>
