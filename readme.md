@@ -19,5 +19,5 @@ colcon build --symlink-install
 ```bash
 # Under workspace folder
 source install/setup.bash
-ros2 launch agv_simulation simulation.launch.py world:=src/agv_practice/agv_simulation/worlds/wall.world
+ros2 launch agv_sim sim.launch.py world:=src/agv_practice/agv_sim/worlds/wall.world
 ```

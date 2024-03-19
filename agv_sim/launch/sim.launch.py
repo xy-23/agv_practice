@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     xacro_file = os.path.join(get_package_share_directory('agv_description'), 'urdf/robot.urdf.xacro')
     robot_description = xacro.process_file(xacro_file).toxml()
-    rviz_config = os.path.join(get_package_share_directory('agv_simulation'), 'rviz/simulation.rviz')
+    rviz_config = os.path.join(get_package_share_directory('agv_sim'), 'rviz/sim.rviz')
 
     robot_state_publisher_node = Node(
         package = 'robot_state_publisher',
