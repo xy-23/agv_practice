@@ -545,7 +545,7 @@
       <static>1</static>
     </model>
     <state world_name='default'>
-      <sim_time>89 953000000</sim_time>
+      <sim_time>0 0</sim_time>
       <real_time>74 810700612</real_time>
       <wall_time>1711332817 207242135</wall_time>
       <iterations>74651</iterations>
