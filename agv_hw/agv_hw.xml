@@ -1,0 +1,9 @@
+<library path="agv_hw">
+  <class name="agv_hw/Robomaster6020"
+         type="agv_hw::Robomaster6020"
+         base_class_type="hardware_interface::ActuatorInterface">
+    <description>
+      The Robomaster 6020 motor using an actuator hardware interface type.
+    </description>
+  </class>
+</library>
