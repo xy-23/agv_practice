@@ -44,7 +44,7 @@ class TCPNode(Node):
         self.get_logger().info(f"Received log out message: {msg}\n")
 
     def rospc_transformer(self, data):
-        json_data, [rangelist, relist] = json(data)
+        json_data, [rangelist, relist] = json.Json_transformer(data)
         angle_min = -45
         angle_max = 225
 
