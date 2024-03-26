@@ -39,8 +39,9 @@ public:
 
 private:
   // TODO on_init()
-  std::string can_name_ = "can0";
-  canid_t rx_id_ = 0x205;
+  int motor_id_;
+  std::string can_name_;
+  canid_t rx_id_;
 
   std::shared_ptr<SocketCAN> can_;
 

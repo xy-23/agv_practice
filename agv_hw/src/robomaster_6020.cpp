@@ -22,6 +22,11 @@ hardware_interface::CallbackReturn Robomaster6020::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
+  // 读取参数
+  can_name_ = info_.hardware_parameters["can_name"];
+  motor_id_ = stod(info_.hardware_parameters["motor_id"]);
+  rx_id_ = 0x204 + motor_id_;
+
   // 检查是否只有一个joint
   if (info_.joints.size() != 1) {
     RCLCPP_FATAL(rclcpp::get_logger("Robomaster6020"), "Expected single joint!");
@@ -60,9 +65,15 @@ hardware_interface::CallbackReturn Robomaster6020::on_init(
 
   for (std::size_t i = 0; i < required_name_list.size(); i++) {
     if (required_count_list[i] == 1) continue;
-    RCLCPP_FATAL(
-      rclcpp::get_logger("Robomaster6020"), "Expected single \"%s\" state_interface!",
-      required_name_list[i].c_str());
+    if (required_count_list[i] > 1) {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("Robomaster6020"), "Expected single \"%s\" state_interface!",
+        required_name_list[i].c_str());
+    } else {
+      RCLCPP_FATAL(
+        rclcpp::get_logger("Robomaster6020"), "Not found \"%s\" state_interface!",
+        required_name_list[i].c_str());
+    }
     state_interfaces_ok = false;
   }
 
@@ -162,10 +173,12 @@ hardware_interface::return_type Robomaster6020::write(
   int16_t current = command_effort_ * 0.741 / 3 * 16384;
 
   can_frame tx_frame;
-  tx_frame.can_id = 0x1FF;  // TODO
+  tx_frame.can_id = (motor_id_ < 5) ? 0x1FF : 0x200;
   tx_frame.len = 8;
-  tx_frame.data[0] = current >> 8;
-  tx_frame.data[1] = current;
+
+  int i = ((motor_id_ - 1) % 4) * 2;
+  tx_frame.data[i] = current >> 8;
+  tx_frame.data[i + 1] = current;
 
   can_->write(&tx_frame);
 

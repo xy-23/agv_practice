@@ -50,6 +50,10 @@ install(TARGETS agv_hw
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
+install(
+  DIRECTORY config launch urdf
+  DESTINATION share/${PROJECT_NAME}
+)
 
 # exports
 ament_export_targets(export_agv_hw HAS_LIBRARY_TARGET)
