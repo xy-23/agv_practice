@@ -1,6 +1,9 @@
 import rclpy
 from rclpy.node import Node
+from sensor_msgs.msg import PointCloud2, PointField
+import json_transformer as json
 import socket
+import numpy as np
 
 class TCPNode(Node):
     def __init__(self, ip_config = '192.168.192.101', port_config = 2111):
@@ -47,6 +50,25 @@ class TCPNode(Node):
         self.send_data(data)
         msg = self.recv_data()
         self.get_logger().info(f"Received lidar data message: {msg}\n")
+
+    def rospc_transformer(self, data):
+        json_data = json(data)
+        msg = PointCloud2()
+        msg.header.frame_id = 'H1E0-03B_Lidar_Data'
+        msg.header.stamp = self.get_clock().now().to_msg()
+
+        # Set point cloud data properties
+        msg.height = 1
+        msg.width = len(data)
+        msg.is_dense = True 
+        msg.fields.append(PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1))
+        msg.fields.append(PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1))
+
+        # Convert custom data to bytes and assign it to the message
+        msg.data = data.astype(np.float32).tobytes()
+
+        self.publisher_.publish(msg)
+        self.get_logger().info('Published lidar scan point cloud')
             
     def shutdown(self):
         self.logout()
@@ -56,11 +78,11 @@ class TCPNode(Node):
 def main(args = None):
     rclpy.init(args=args)
 
-    minimal_publisher = TCPNode()
+    tcp_node = TCPNode()
 
-    rclpy.spin(minimal_publisher)
+    rclpy.spin(tcp_node)
 
-    minimal_publisher.destroy_node()
+    tcp_node.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
