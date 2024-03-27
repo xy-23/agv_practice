@@ -1,11 +1,12 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
-from agv_lidar.json_transformer import Json_transformer
 import socket
 import struct
 import math
 
+MAX_ANGLE = math.radians(135)
+MIN_ANGLE = math.radians(-135)
 
 class TCPNode(Node):
     def __init__(self, ip_config="192.168.192.101", port_config=2111):
@@ -25,6 +26,36 @@ class TCPNode(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
+        self.rospc_transformer()
+
+    def send_data(self, data):
+        self.tcp_client.send(data)
+
+    def recv_data(self, buffer_size=1024):
+        return self.tcp_client.recv(buffer_size).hex()
+
+    def login(self):
+        self.get_logger().info("Trying to log in...\n")
+        data = b"\x02\x02\x02\x02\x00\x0E\x02\x01\x03\xF4\x72\x47\x44\x0D"
+        self.send_data(data)
+        msg = self.recv_data()
+        self.get_logger().info(f"Received log in message: {msg}\n")
+
+    def logout(self):
+        if self.start_recv:
+            self.get_logger().info("Trying to cancel acception...\n")
+            data = b"\x02\x02\x02\x02\x00\x0a\x02\x31\x01\x45"
+            self.send_data(data)
+            msg = self.recv_data()
+            self.get_logger().info(f"Received acception cancel message: {msg}\n")
+
+        self.get_logger().info("Trying to log out...\n")
+        data = b"\x02\x02\x02\x02\x00\x09\x02\x02\x15"
+        self.send_data(data)
+        msg = self.recv_data()
+        self.get_logger().info(f"Received log out message: {msg}\n")
+
+    def rospc_transformer(self):
         if not self.start_recv:
             self.acc_init()
             self.start_recv = True
@@ -41,81 +72,39 @@ class TCPNode(Node):
             ">BBBHBHHHHH", data[:16]
         )
 
+        if frame_i == 0:
+            self._point_cnt = 0
+            self._ranges = []
+            self._intensities = []
+
+        self._point_cnt += n
+
         scan_f /= 1e2
         angle_res = math.radians(angle_res / 1e4)
+        scans = struct.unpack(">" + "H" * 2 * n, data[16:-11])
+        self._ranges += [scans[i] / 1e3 for i in range(0, len(scans), 2)]
+        self._intensities += [scans[i] / 1.0 for i in range(1, len(scans), 2)]
 
-        MAX_ANGLE = math.radians(135)
-        MIN_ANGLE = math.radians(-135)
-
-        scans = struct.unpack(">" + "I" * n * 2, data[16:-11])
-
-        ranges = [scans[i] / 1e3 for i in range(0, len(data), 2)]
-        intensities = [scans[i] for i in range(1, len(data), 2)]
-
-        lidar_msg = LaserScan()
-        lidar_msg.header.stamp = self.get_clock().now().to_msg()
-        lidar_msg.header.frame_id = "laser_frame"
-        lidar_msg.angle_increment = (MAX_ANGLE - MIN_ANGLE) / N
-        lidar_msg.angle_min = lidar_msg.angle_increment * i
-        lidar_msg.angle_max = lidar_msg.angle_increment * (i + n)
-        # lidar_msg.scan_time = 0.033
-        # lidar_msg.time_increment = 1/108e3
-        lidar_msg.range_min = 0.1
-        lidar_msg.range_max = 40.0
-        lidar_msg.ranges = ranges
-        lidar_msg.intensities = intensities
-        self.publisher_.publish(lidar_msg)
-
-    def send_data(self, data):
-        self.tcp_client.send(data)
-
-    def recv_data(self, buffer_size=1024):
-        return self.tcp_client.recv(buffer_size).hex()
-
-    def login(self):
-        self.get_logger().info("Trying to log in...\n")
-        data = b"\x02\x02\x02\x02\x00\x0E\x02\x01\x03\xF4\x72\x47\x44\x0D"
-        self.send_data(data)
-        msg = self.recv_data()
-        self.get_logger().info(f"Received log in message: {msg}\n")
-
-    def logout(self):
-        self.get_logger().info("Trying to log out...\n")
-        data = b"\x02\x02\x02\x02\x00\x09\x02\x02\x15"
-        self.send_data(data)
-        msg = self.recv_data()
-        self.get_logger().info(f"Received log out message: {msg}\n")
-
-    def rospc_transformer(self, data):
-        json_data, [rangelist, relist] = Json_transformer(data)
-        angle_min = -135.0 / 57.3
-        angle_max = 135.0 / 57.3
-
-        lidar_msg = LaserScan()
-        lidar_msg.header.stamp = self.get_clock().now().to_msg()
-        lidar_msg.header.frame_id = "laser_frame"
-        lidar_msg.angle_min = angle_min
-        lidar_msg.angle_max = angle_max
-        lidar_msg.angle_increment = 270 / len(rangelist) / 57.3
-        # lidar_msg.scan_time = 0.033
-        # lidar_msg.time_increment = 1/108e3
-        lidar_msg.range_min = 0.1
-        lidar_msg.range_max = 40.0
-        lidar_msg.ranges = rangelist
-        lidar_msg.intensities = relist
-
-        return lidar_msg
+        if self._point_cnt == N:
+            lidar_msg = LaserScan()
+            lidar_msg.header.stamp = self.get_clock().now().to_msg()
+            lidar_msg.header.frame_id = "laser_frame"
+            lidar_msg.angle_increment = (MAX_ANGLE - MIN_ANGLE) / N
+            lidar_msg.angle_min = MIN_ANGLE
+            lidar_msg.angle_max = MAX_ANGLE
+            lidar_msg.scan_time = 0.033
+            lidar_msg.time_increment = 1/108e3
+            lidar_msg.range_min = 0.1
+            lidar_msg.range_max = 40.0
+            lidar_msg.ranges = self._ranges
+            lidar_msg.intensities = self._intensities
+            self.publisher_.publish(lidar_msg)
 
     def acc_init(self):
         self.get_logger().info("Trying to receive lidar data...\n")
         data = b"\x02\x02\x02\x02\x00\x0a\x02\x31\x01\x46"
         self.send_data(data)
         self.recv_data()
-
-    def data_acc(self):
-        msg = self.recv_data()
-        msg = self.rospc_transformer(msg)
-        self.publisher_.publish(msg)
 
     def shutdown(self):
         self.logout()
