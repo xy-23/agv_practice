@@ -1,12 +1,13 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
-import json_transformer as json
+from agv_lidar.json_transformer import Json_transformer
 import socket
 
 class TCPNode(Node):
     def __init__(self, ip_config = '192.168.192.101', port_config = 2111):
         super().__init__('tcp_node')
+        self.publisher_ = self.create_publisher(LaserScan, 'agv_lidar', 10)
         #TCP connect
         self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host = ip_config
@@ -15,7 +16,7 @@ class TCPNode(Node):
         self.tcp_client.connect(addr)
 
         self.login()
-        self.data_acc()
+        self.acc_init()
 
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -44,29 +45,35 @@ class TCPNode(Node):
         self.get_logger().info(f"Received log out message: {msg}\n")
 
     def rospc_transformer(self, data):
-        json_data, [rangelist, relist] = json.Json_transformer(data)
-        angle_min = -45
-        angle_max = 225
+        json_data, [rangelist, relist] = Json_transformer(data)
+        angle_min = -135.0 / 57.3
+        angle_max = 135.0 / 57.3
 
         lidar_msg = LaserScan()
+        lidar_msg.header.stamp = self.get_clock().now().to_msg()
+        lidar_msg.header.frame_id = "laser_frame"
         lidar_msg.angle_min = angle_min
         lidar_msg.angle_max = angle_max
-        lidar_msg.angle_increment = 0.0
-        lidar_msg.scan_time = 0.0
-        lidar_msg.range_min = min(rangelist)
-        lidar_msg.range_max = max(rangelist)
+        lidar_msg.angle_increment = 270 / len(rangelist) / 57.3
+        # lidar_msg.scan_time = 0.033
+        # lidar_msg.time_increment = 1/108e3
+        lidar_msg.range_min = 0.1
+        lidar_msg.range_max = 40.0
         lidar_msg.ranges = rangelist
         lidar_msg.intensities = relist
 
         return lidar_msg
-
-    def data_acc(self):
+    
+    def acc_init(self):
         self.get_logger().info("Trying to receive lidar data...\n")
         data = b'\x02\x02\x02\x02\x00\x0a\x02\x31\x01\x46'
         self.send_data(data)
+        self.recv_data()
+
+    def data_acc(self):
         msg = self.recv_data()
         msg = self.rospc_transformer(msg)
-        self.get_logger().info(f"Received lidar data message: {msg}\n")
+        self.publisher_.publish(msg)
 
     def shutdown(self):
         self.logout()

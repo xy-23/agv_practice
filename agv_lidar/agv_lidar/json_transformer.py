@@ -11,10 +11,8 @@ def Json_transformer(data):
         "timestamp": data[-22:-2],
         "checksum": data[-2:]
     }
+    print(parsed_data['header'])
+    range_list = list(map(lambda x: int(x, 16)/1e3, parsed_data["scan_data"]))
+    re_list = list(map(lambda x: int(x, 16)/1.0, parsed_data["re_data"]))
 
-    json_data = json.dumps(parsed_data, indent=4)
-    dict_data = json.load(json_data)
-    range_list = list(map(lambda x: int(x, 16), dict_data["scan_data"]))
-    re_list = list(map(lambda x: int(x, 16), dict_data["re_data"]))
-
-    return json_data, [range_list, re_list]
+    return parsed_data, [range_list, re_list]
