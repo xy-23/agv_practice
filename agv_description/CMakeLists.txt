@@ -13,6 +13,7 @@ install(DIRECTORY
   ros2_control
   rviz
   urdf
+  meshes
   DESTINATION share/${PROJECT_NAME}
 )
 
