@@ -15,16 +15,13 @@
 
     <link name="chassis">
         <visual>
-            <!-- <origin xyz="0 0 0.4"/> -->
-            <!-- <pose>0 0 0 0 0 0</pose> -->
+            <origin xyz="-0.4 -0.26 0"/>
             <geometry>
-                <mesh filename="package://agv_description/mesh/agv.dae"/>
-                <scale>0.0001 0.0001 0.0001</scale>
-                
+                <mesh filename="package://agv_description/meshes/body.stl" scale="0.001 0.001 0.001"/>
             </geometry>
             <material name="white"/>
         </visual>
-        <!-- <collision>
+        <collision>
             <origin xyz="0 0 0.4"/>
             <geometry>
                 <box size="1 0.52 0.7"/>
@@ -32,7 +29,7 @@
         </collision>
         <xacro:inertial_box mass="10" x="1" y="0.52" z="0.7">
             <origin xyz="0 0 0.4" rpy="0 0 0"/>
-        </xacro:inertial_box> -->
+        </xacro:inertial_box>
     </link>
 
     <!-- LEFT WHEEL -->
