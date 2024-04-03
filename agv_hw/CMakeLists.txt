@@ -24,7 +24,7 @@ endforeach()
 add_library(
   agv_hw
   SHARED
-  src/robomaster_6020.cpp
+  src/tiger_motor.cpp
 )
 target_compile_features(agv_hw PUBLIC cxx_std_17)
 target_include_directories(agv_hw PUBLIC

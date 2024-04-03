@@ -13,4 +13,5 @@ forward_position_controller:
   ros__parameters:
     joints:
       - left_wheel_joint
-    interface_name: effort
+      - right_wheel_joint
+    interface_name: velocity
