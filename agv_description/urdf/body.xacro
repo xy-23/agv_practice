@@ -29,7 +29,8 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://agv_description/meshes/chassis.stl" scale ="0.001 0.001 0.001"/>
+                <!-- <mesh filename="package://agv_description/meshes/chassis.stl" scale ="0.001 0.001 0.001"/> -->
+                <mesh filename="/home/cc/.gazebo/models/chassis.stl" scale ="0.001 0.001 0.001"/>
             </geometry>
             <material name="white"/>
         </visual>
@@ -49,7 +50,8 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://agv_description/meshes/gaizi.stl" scale ="0.001 0.001 0.001"/>
+                <!-- <mesh filename="package://agv_description/meshes/gaizi.stl" scale ="0.001 0.001 0.001"/> -->
+                <mesh filename="/home/cc/.gazebo/models/gaizi.stl" scale ="0.001 0.001 0.001"/>
             </geometry>
             <material name="orange">
                 <color rgba="1.0 0.4235 0.0392 1.0"/>
@@ -57,18 +59,27 @@
         </visual>
     </link>
 
+    <gazebo reference="gaizi_front">  
+	    <material>Gazebo/Orange</material>  
+    </gazebo>
+
     <!-- gaizi_back -->
     <link name="gaizi_back">
         <visual>
             <origin xyz="0 0 0" rpy="0 0 ${pi}" />
             <geometry>
-                <mesh filename="package://agv_description/meshes/gaizi.stl" scale ="0.001 0.001 0.001"/>
+                <!-- <mesh filename="package://agv_description/meshes/gaizi.stl" scale ="0.001 0.001 0.001"/> -->
+                <mesh filename="/home/cc/.gazebo/models/gaizi.stl" scale ="0.001 0.001 0.001"/>
             </geometry>
             <material name="orange">
                 <color rgba="1.0 0.4235 0.0392 1.0"/>
             </material>
         </visual>
     </link>
+
+    <gazebo reference="gaizi_back">  
+	    <material>Gazebo/Orange</material>  
+    </gazebo>
 
     <!-- LEFT WHEEL -->
 
