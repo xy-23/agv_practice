@@ -6,12 +6,20 @@ controller_manager:
       type: joint_state_broadcaster/JointStateBroadcaster
 
     forward_position_controller:
-      type: forward_command_controller/ForwardCommandController
+      type: diff_drive_controller/DiffDriveController
 
 
 forward_position_controller:
   ros__parameters:
-    joints:
-      - left_wheel_joint
-      - right_wheel_joint
-    interface_name: velocity
+
+    publish_rate: 50.0
+
+    base_frame_id: base_link
+
+    left_wheel_names: ['left_wheel_joint']
+    right_wheel_names: ['right_wheel_joint']
+    wheel_separation: 0.384
+    wheel_radius: 0.075
+
+    use_stamped_vel: false
+    right_wheel_radius_multiplier: -1.0

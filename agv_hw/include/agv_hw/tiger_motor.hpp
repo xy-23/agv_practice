@@ -76,11 +76,11 @@ private:
   unsigned char SendChannel = 0;
 
   bool motor_inited_;
-  int motor_id_left_;
-  int motor_id_right_;
+  unsigned int motor_id_left_;
+  unsigned int motor_id_right_;
   std::string can_name_;
-  canid_t rx_id_left;
-  canid_t rx_id_right;
+  canid_t tx_id_left;
+  canid_t tx_id_right;
 
   std::shared_ptr<SocketCAN> can_;
 

@@ -26,9 +26,9 @@ hardware_interface::CallbackReturn Tiger_motor::on_init(
   // 读取参数
   can_name_ = info_.hardware_parameters["can_name"];
   motor_id_left_ = stod(info_.hardware_parameters["motor_id_left"]);
-  rx_id_left = 0x600 + motor_id_left_;
+  tx_id_left = 0x600 + motor_id_left_;
   motor_id_right_ = stod(info_.hardware_parameters["motor_id_right"]);
-  rx_id_right = 0x600 + motor_id_right_;
+  tx_id_right = 0x600 + motor_id_right_;
 
   // // 检查是否只有一个joint
   // if (info_.joints.size() != 2) {
@@ -323,11 +323,11 @@ void Tiger_motor::start_up_NMT(can_frame * tx_frame, uint8_t canID)
 hardware_interface::return_type Tiger_motor::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  int16_t speed_left = left_command_speed_ * 1000 / 6 * 4096 * 20;
-  int16_t speed_right = right_command_speed_ * 1000 / 6 * 4096 * 20;
+  long long speed_left = left_command_speed_ * 10 / 6 * 4096 * 20;
+  long long speed_right = right_command_speed_ * 10 / 6 * 4096 * 20;
 
   can_frame left_tx_frame;
-  left_tx_frame.can_id = rx_id_left;
+  left_tx_frame.can_id = tx_id_left;
   left_tx_frame.len = 8;
   left_tx_frame.data[0] = CMD_SET_SPEED;
   left_tx_frame.data[1] = INDEX_SPEED % 256;
@@ -339,7 +339,7 @@ hardware_interface::return_type Tiger_motor::write(
   left_tx_frame.data[7] = (speed_left >> 24) & 0X000000FF;
 
   can_frame right_tx_frame;
-  right_tx_frame.can_id = rx_id_right;
+  right_tx_frame.can_id = tx_id_right;
   right_tx_frame.len = 8;
   right_tx_frame.data[0] = CMD_SET_SPEED;
   right_tx_frame.data[1] = INDEX_SPEED % 256;
@@ -397,20 +397,20 @@ void Tiger_motor::callback(const can_frame & frame)
     std::lock_guard<std::mutex> lg(mutex_);
 
     auto canid = frame.can_id - 0x0280;
-    if (canid == 0) {
+    if (canid == motor_id_left_) {
       left_state_position_mid = frame.data[3];
       left_state_position_mid = (left_state_position_mid << 8) + frame.data[2];
       left_state_position_mid = (left_state_position_mid << 8) + frame.data[1];
       left_state_position_mid = (left_state_position_mid << 8) + frame.data[0];
       left_state_position_ =
         static_cast<double>(left_state_position_mid) / 4096.0 / 20.0 * 2.0 * M_PI;
-    } else if (canid == 1) {
+    } else if (canid == motor_id_right_) {
       right_state_position_mid = frame.data[3];
       right_state_position_mid = (right_state_position_mid << 8) + frame.data[2];
       right_state_position_mid = (right_state_position_mid << 8) + frame.data[1];
       right_state_position_mid = (right_state_position_mid << 8) + frame.data[0];
       right_state_position_ =
-        static_cast<double>(left_state_position_mid) / 4096.0 / 20.0 * 2.0 * M_PI;
+        static_cast<double>(right_state_position_mid) / 4096.0 / 20.0 * 2.0 * M_PI;
     }
   }
 }

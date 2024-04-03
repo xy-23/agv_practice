@@ -5,8 +5,8 @@
         <hardware>
             <plugin>agv_hw/Tiger_motor</plugin>
             <param name="can_name">can0</param>
-            <param name="motor_id_left">1</param>
-            <param name="motor_id_right">2</param>
+            <param name="motor_id_left">2</param>
+            <param name="motor_id_right">1</param>
         </hardware>
         <joint name="left_wheel_joint">
             <command_interface name="velocity"/>
