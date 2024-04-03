@@ -13,15 +13,27 @@
         <origin xyz="0 0 0"/>
     </joint>
 
+    <joint name="gaizi_front_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="gaizi_front"/>
+        <origin xyz="0 0 0"/>
+    </joint>
+
+    <joint name="gaizi_back_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="gaizi_back"/>
+        <origin xyz="0 0 0"/>
+    </joint>
+
     <link name="chassis">
         <visual>
-            <origin xyz="-0.4 -0.26 0"/>
+            <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://agv_description/meshes/body.stl" scale="0.001 0.001 0.001"/>
+                <mesh filename="package://agv_description/meshes/chassis.stl" scale ="0.001 0.001 0.001"/>
             </geometry>
             <material name="white"/>
         </visual>
-        <collision>
+        <!-- <collision>
             <origin xyz="0 0 0.4"/>
             <geometry>
                 <box size="1 0.52 0.7"/>
@@ -29,7 +41,33 @@
         </collision>
         <xacro:inertial_box mass="10" x="1" y="0.52" z="0.7">
             <origin xyz="0 0 0.4" rpy="0 0 0"/>
-        </xacro:inertial_box>
+        </xacro:inertial_box> -->
+    </link>
+
+    <!-- gaizi_front -->
+    <link name="gaizi_front">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://agv_description/meshes/gaizi.stl" scale ="0.001 0.001 0.001"/>
+            </geometry>
+            <material name="orange">
+                <color rgba="1.0 0.4235 0.0392 1.0"/>
+            </material>
+        </visual>
+    </link>
+
+    <!-- gaizi_back -->
+    <link name="gaizi_back">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 ${pi}" />
+            <geometry>
+                <mesh filename="package://agv_description/meshes/gaizi.stl" scale ="0.001 0.001 0.001"/>
+            </geometry>
+            <material name="orange">
+                <color rgba="1.0 0.4235 0.0392 1.0"/>
+            </material>
+        </visual>
     </link>
 
     <!-- LEFT WHEEL -->
