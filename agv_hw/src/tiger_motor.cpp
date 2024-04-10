@@ -311,7 +311,7 @@ void Tiger_motor::SendSetPDOCmd(
 
 void Tiger_motor::start_up_NMT(can_frame * tx_frame, uint8_t canID)
 {
-  tx_frame->can_id = 0x0600 + canID;
+  tx_frame->can_id = 0x00;
   tx_frame->len = 2;
 
   tx_frame->data[0] = 0x01;
