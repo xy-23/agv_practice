@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 30
+    update_rate: 1000
     use_sim_time: true
 
     gazebo_controller:
@@ -12,7 +12,7 @@ controller_manager:
 gazebo_controller:
   ros__parameters:
 
-    publish_rate: 50.0
+    publish_rate: 1000.0
 
     base_frame_id: base_link
 

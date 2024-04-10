@@ -89,6 +89,8 @@
         <child link="left_wheel"/>
         <origin xyz="0 0.192 0.075" rpy="-${pi/2} 0 0" />
         <axis xyz="0 0 1"/>
+        <limit effort="1000.0" lower="-1e50" upper="1e50" velocity="30"/>
+        <dynamics damping="0.0" friction="0.0"/>
     </joint>
 
     <link name="left_wheel">
@@ -100,7 +102,8 @@
         </visual>
         <collision>
             <geometry>
-                <cylinder radius="0.075" length="0.05"/>
+                <!-- <cylinder radius="0.075" length="0.05"/> -->
+                <sphere radius="0.075"/>
             </geometry>
         </collision>
         <xacro:inertial_cylinder mass="2" length="0.05" radius="0.075">
@@ -115,6 +118,8 @@
         <child link="right_wheel"/>
         <origin xyz="0 -0.192 0.075" rpy="${pi/2} 0 0" />
         <axis xyz="0 0 -1"/>
+        <limit effort="1000.0" lower="-1e50" upper="1e50" velocity="30"/>
+        <dynamics damping="0.0" friction="0.0"/>
     </joint>
 
     <link name="right_wheel">
@@ -126,7 +131,8 @@
         </visual>
         <collision>
             <geometry>
-                <cylinder radius="0.075" length="0.05"/>
+                <!-- <cylinder radius="0.075" length="0.05"/> -->
+                <sphere radius="0.075"/>
             </geometry>
         </collision>
         <xacro:inertial_cylinder mass="2" length="0.05" radius="0.075">
@@ -154,9 +160,9 @@
                 <sphere radius="0.06"/>
             </geometry>
         </collision>
-        <xacro:inertial_sphere mass="1" radius="0.06">
+        <!-- <xacro:inertial_sphere mass="1" radius="0.06">
             <origin xyz="0 0 0" rpy="0 0 0"/>
-        </xacro:inertial_sphere>
+        </xacro:inertial_sphere> -->
     </link>
 
     <joint name="caster_right_front_wheel_joint" type="fixed">
@@ -177,9 +183,9 @@
                 <sphere radius="0.06"/>
             </geometry>
         </collision>
-        <xacro:inertial_sphere mass="1" radius="0.06">
+        <!-- <xacro:inertial_sphere mass="1" radius="0.06">
             <origin xyz="0 0 0" rpy="0 0 0"/>
-        </xacro:inertial_sphere>
+        </xacro:inertial_sphere> -->
     </link>
 
     <joint name="caster_left_back_wheel_joint" type="fixed">
@@ -200,9 +206,9 @@
                 <sphere radius="0.06"/>
             </geometry>
         </collision>
-        <xacro:inertial_sphere mass="1" radius="0.06">
+        <!-- <xacro:inertial_sphere mass="1" radius="0.06">
             <origin xyz="0 0 0" rpy="0 0 0"/>
-        </xacro:inertial_sphere>
+        </xacro:inertial_sphere> -->
     </link>
 
     <joint name="caster_right_back_wheel_joint" type="fixed">
@@ -224,9 +230,9 @@
                 <sphere radius="0.06"/>
             </geometry>
         </collision>
-        <xacro:inertial_sphere mass="1" radius="0.06">
+        <!-- <xacro:inertial_sphere mass="1" radius="0.06">
             <origin xyz="0 0 0" rpy="0 0 0"/>
-        </xacro:inertial_sphere>
+        </xacro:inertial_sphere> -->
     </link>
 
 </robot> 
