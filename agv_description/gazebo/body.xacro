@@ -5,6 +5,14 @@
         <material>Gazebo/White</material>
     </gazebo>
 
+    <gazebo reference="cover_front">  
+	    <material>Gazebo/Orange</material>  
+    </gazebo>
+
+    <gazebo reference="cover_back">  
+	    <material>Gazebo/Orange</material>  
+    </gazebo>
+
     <gazebo reference="left_wheel">
         <material>Gazebo/Blue</material>
     </gazebo>
