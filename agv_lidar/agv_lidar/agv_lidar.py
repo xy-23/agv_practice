@@ -5,7 +5,8 @@ import socket
 import struct
 import math
 
-MIN_ANGLE = math.radians(-135)
+MIN_ANGLE = math.radians(-90)
+
 
 class TCPNode(Node):
     def __init__(self, ip_config="192.168.192.101", port_config=2111):
@@ -36,6 +37,19 @@ class TCPNode(Node):
     def login(self):
         self.get_logger().info("Trying to log in...\n")
         data = b"\x02\x02\x02\x02\x00\x0E\x02\x01\x03\xF4\x72\x47\x44\x0D"
+        self.send_data(data)
+        msg = self.recv_data()
+        self.get_logger().info(f"Received log in message: {msg}\n")
+
+        data = (
+            b"\x02\x02\x02\x02\x00\x12\x01\x1B\x01"
+            # + b"\xff\xf9\xe5\x80"  # -40 degree * 10000 in complement code
+            + b"\x00\x00\x00\x00"
+            # + b"\x00\x21\x91\xc0"  # 220 degree * 10000 in complement code
+            + b"\x00\x1b\x77\x40"
+            # + b"\x06"  # checksum
+            + b"\x09"
+        )
         self.send_data(data)
         msg = self.recv_data()
         self.get_logger().info(f"Received log in message: {msg}\n")
@@ -90,9 +104,9 @@ class TCPNode(Node):
             lidar_msg.header.frame_id = "laser_frame"
             lidar_msg.angle_increment = angle_res
             lidar_msg.angle_min = MIN_ANGLE
-            lidar_msg.angle_max = angle_res * (N-1) + MIN_ANGLE
+            lidar_msg.angle_max = angle_res * (N - 1) + MIN_ANGLE
             lidar_msg.scan_time = 0.033
-            lidar_msg.time_increment = 1/108e3
+            lidar_msg.time_increment = 1 / 108e3
             lidar_msg.range_min = 0.1
             lidar_msg.range_max = 40.0
             lidar_msg.ranges = self._ranges
@@ -109,6 +123,10 @@ class TCPNode(Node):
         self.logout()
         self.tcp_client.close()
         self.get_logger().info("Lidar data node shut down.\n")
+
+    def destroy_node(self):
+        self.logout()
+        super().destroy_node()
 
 
 def main(args=None):
