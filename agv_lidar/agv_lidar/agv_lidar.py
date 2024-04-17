@@ -5,13 +5,12 @@ import socket
 import struct
 import math
 
-MAX_ANGLE = math.radians(135)
 MIN_ANGLE = math.radians(-135)
 
 class TCPNode(Node):
     def __init__(self, ip_config="192.168.192.101", port_config=2111):
         super().__init__("tcp_node")
-        self.publisher_ = self.create_publisher(LaserScan, "agv_lidar", 10)
+        self.publisher_ = self.create_publisher(LaserScan, "scan", 10)
         # TCP connect
         self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host = ip_config
@@ -89,9 +88,9 @@ class TCPNode(Node):
             lidar_msg = LaserScan()
             lidar_msg.header.stamp = self.get_clock().now().to_msg()
             lidar_msg.header.frame_id = "laser_frame"
-            lidar_msg.angle_increment = (MAX_ANGLE - MIN_ANGLE) / N
+            lidar_msg.angle_increment = angle_res
             lidar_msg.angle_min = MIN_ANGLE
-            lidar_msg.angle_max = MAX_ANGLE
+            lidar_msg.angle_max = angle_res * (N-1) + MIN_ANGLE
             lidar_msg.scan_time = 0.033
             lidar_msg.time_increment = 1/108e3
             lidar_msg.range_min = 0.1
