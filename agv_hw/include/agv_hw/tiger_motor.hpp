@@ -87,6 +87,11 @@ private:
   std::mutex mutex_;
   can_frame rx_frame_;
 
+  bool left_first_read_ = false;
+  bool right_first_read_ = false;
+  double left_first_position_ = 0;
+  double right_first_position_ = 0;
+
   double left_command_speed_ = 0;   //m/s
   double right_command_speed_ = 0;  //m/s
   double left_state_position_ = 0;

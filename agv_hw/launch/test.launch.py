@@ -2,7 +2,12 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (
+    Command,
+    FindExecutable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+)
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -27,13 +32,13 @@ def generate_launch_description():
     robot_controllers = PathJoinSubstitution(
         [
             FindPackageShare("agv_hw"),
-            "config",
-            "robomaster_6020.yaml",
+            "ros2_control",
+            "agv_controller.yaml",
         ]
     )
 
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("agv_description"), "rviz", "view_robot.rviz"]
+        [FindPackageShare("agv_hw"), "rviz", "test.rviz"]
     )
 
     # nodes!
@@ -68,7 +73,7 @@ def generate_launch_description():
         executable="spawner",
         arguments=[
             "joint_state_broadcaster",
-            # "--controller-manager", 
+            # "--controller-manager",
             # "/controller_manager"
         ],
     )
@@ -77,8 +82,8 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=[
-            "forward_position_controller", 
-            # "--controller-manager", 
+            "forward_position_controller",
+            # "--controller-manager",
             # "/controller_manager"
         ],
     )
@@ -92,10 +97,12 @@ def generate_launch_description():
     )
 
     # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[robot_controller_spawner],
+    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = (
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=joint_state_broadcaster_spawner,
+                on_exit=[robot_controller_spawner],
+            )
         )
     )
 

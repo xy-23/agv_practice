@@ -51,7 +51,7 @@ install(TARGETS agv_hw
   RUNTIME DESTINATION bin
 )
 install(
-  DIRECTORY config launch urdf
+  DIRECTORY ros2_control launch urdf rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

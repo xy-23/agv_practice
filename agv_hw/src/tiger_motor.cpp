@@ -214,6 +214,14 @@ hardware_interface::CallbackReturn Tiger_motor::on_configure(
   }
 
   motor_inited_ = true;
+
+  // wait until recived first
+  while (!left_first_read_ || !right_first_read_)
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+  left_first_position_ = left_state_position_;
+  right_first_position_ = right_state_position_;
+
   RCLCPP_INFO(rclcpp::get_logger("Tiger_motor"), "Motor inited!");
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -323,8 +331,8 @@ void Tiger_motor::start_up_NMT(can_frame * tx_frame, uint8_t canID)
 hardware_interface::return_type Tiger_motor::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  long long speed_left = left_command_speed_ * 10 / 6 * 4096 * 20;
-  long long speed_right = right_command_speed_ * 10 / 6 * 4096 * 20;
+  long long speed_left = left_command_speed_ * 10 / 2 / M_PI * 4096 * 20;
+  long long speed_right = right_command_speed_ * 10 / 2 / M_PI * 4096 * 20;
 
   can_frame left_tx_frame;
   left_tx_frame.can_id = tx_id_left;
@@ -398,19 +406,23 @@ void Tiger_motor::callback(const can_frame & frame)
 
     auto canid = frame.can_id - 0x0280;
     if (canid == motor_id_left_) {
+      if (!left_first_read_) left_first_read_ = true;
       left_state_position_mid = frame.data[3];
       left_state_position_mid = (left_state_position_mid << 8) + frame.data[2];
       left_state_position_mid = (left_state_position_mid << 8) + frame.data[1];
       left_state_position_mid = (left_state_position_mid << 8) + frame.data[0];
       left_state_position_ =
-        static_cast<double>(left_state_position_mid) / 4096.0 / 20.0 * 2.0 * M_PI;
+        static_cast<double>(left_state_position_mid) / 4096.0 / 20.0 * 2.0 * M_PI -
+        left_first_position_;
     } else if (canid == motor_id_right_) {
+      if (!right_first_read_) right_first_read_ = true;
       right_state_position_mid = frame.data[3];
       right_state_position_mid = (right_state_position_mid << 8) + frame.data[2];
       right_state_position_mid = (right_state_position_mid << 8) + frame.data[1];
       right_state_position_mid = (right_state_position_mid << 8) + frame.data[0];
       right_state_position_ =
-        static_cast<double>(right_state_position_mid) / 4096.0 / 20.0 * 2.0 * M_PI;
+        static_cast<double>(right_state_position_mid) / 4096.0 / 20.0 * 2.0 * M_PI -
+        right_first_position_;
     }
   }
 }

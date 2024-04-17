@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 10  # Hz
+    update_rate: 1000  # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -12,7 +12,7 @@ controller_manager:
 forward_position_controller:
   ros__parameters:
 
-    publish_rate: 50.0
+    publish_rate: 100.0
 
     base_frame_id: base_link
 
@@ -23,3 +23,8 @@ forward_position_controller:
 
     use_stamped_vel: false
     right_wheel_radius_multiplier: -1.0
+
+    linear.x.has_acceleration_limits: true
+    linear.x.max_acceleration: 0.8
+    cmd_vel_timeout: 1.0
+
