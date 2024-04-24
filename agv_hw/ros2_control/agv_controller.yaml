@@ -2,29 +2,26 @@ controller_manager:
   ros__parameters:
     update_rate: 1000  # Hz
 
-    joint_state_broadcaster:
+    agv_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    forward_position_controller:
+    agv_controller:
       type: diff_drive_controller/DiffDriveController
 
 
-forward_position_controller:
+agv_controller:
   ros__parameters:
-
-    publish_rate: 100.0
-
-    base_frame_id: base_link
-
     left_wheel_names: ['left_wheel_joint']
     right_wheel_names: ['right_wheel_joint']
-    wheel_separation: 0.384
+    wheel_separation: 0.442
     wheel_radius: 0.075
 
     use_stamped_vel: false
     right_wheel_radius_multiplier: -1.0
 
     linear.x.has_acceleration_limits: true
-    linear.x.max_acceleration: 0.8
-    cmd_vel_timeout: 1.0
+    linear.x.max_acceleration: 0.5
+
+    angular.z.has_acceleration_limits: true
+    angular.z.max_acceleration: 1.0
 

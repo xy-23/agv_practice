@@ -68,50 +68,42 @@ def generate_launch_description():
         arguments=["-d", rviz_config_file],
     )
 
-    joint_state_broadcaster_spawner = Node(
+    agv_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=[
-            "joint_state_broadcaster",
-            # "--controller-manager",
-            # "/controller_manager"
+            "agv_broadcaster",
         ],
     )
 
-    robot_controller_spawner = Node(
+    agv_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=[
-            "forward_position_controller",
-            # "--controller-manager",
-            # "/controller_manager"
+            "agv_controller",
         ],
     )
 
-    # Delay rviz start after `joint_state_broadcaster`
-    delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+    delay_rviz_after_agv_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
+            target_action=agv_broadcaster_spawner,
             on_exit=[rviz_node],
         )
     )
 
-    # Delay start of robot_controller after `joint_state_broadcaster`
-    delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = (
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=joint_state_broadcaster_spawner,
-                on_exit=[robot_controller_spawner],
-            )
+    delay_agv_controller_spawner_after_agv_broadcaster_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=agv_broadcaster_spawner,
+            on_exit=[agv_controller_spawner],
         )
     )
 
     nodes = [
         control_node,
         robot_state_pub_node,
-        joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
-        delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
+        agv_broadcaster_spawner,
+        delay_rviz_after_agv_broadcaster_spawner,
+        delay_agv_controller_spawner_after_agv_broadcaster_spawner,
     ]
 
     return LaunchDescription(nodes)
