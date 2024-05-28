@@ -61,7 +61,7 @@ public:
   void write(can_frame * frame) const
   {
     if (::write(socket_fd_, frame, sizeof(can_frame)) == -1)
-      throw std::runtime_error("Unable to write!");
+      RCLCPP_WARN(rclcpp::get_logger("SocketCAN"), "Failed to wrtie!");
   }
 
 private:
