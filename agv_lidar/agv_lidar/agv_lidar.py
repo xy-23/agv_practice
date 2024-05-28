@@ -21,12 +21,15 @@ class TCPNode(Node):
 
         self.login()
         self.start_recv = False
+        self.recv_state = True
 
         timer_period = 0.001  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
     def timer_callback(self):
         self.rospc_transformer()
+        if self.recv_state == False:
+            self.login()
 
     def send_data(self, data):
         self.tcp_client.send(data)
@@ -39,6 +42,9 @@ class TCPNode(Node):
         data = b"\x02\x02\x02\x02\x00\x0E\x02\x01\x03\xF4\x72\x47\x44\x0D"
         self.send_data(data)
         msg = self.recv_data()
+        if msg != b"\x02\x02\x02\x02\x00\x0A\x12\x01\x01\x26":
+            self.login()
+            return
         self.get_logger().info(f"Received log in message: {msg}\n")
 
         data = (
@@ -80,6 +86,8 @@ class TCPNode(Node):
 
         length = int(self.tcp_client.recv(2).hex(), 16)
         data = self.tcp_client.recv(length - 6)
+        if not data:
+            self.recv_state = False
 
         exe, cmd, info, scan_cnt, frame_i, scan_f, angle_res, N, i, n = struct.unpack(
             ">BBBHBHHHHH", data[:16]
