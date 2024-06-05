@@ -19,5 +19,6 @@ RUN apt-get update && \
     apt-get install -y \
         ros-humble-xacro \
         ros-humble-twist-mux \
+        ros-humble-joy-linux \
         ros-humble-teleop-twist-joy && \
     rm -rf /var/lib/apt/lists/*

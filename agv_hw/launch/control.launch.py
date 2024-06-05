@@ -37,6 +37,14 @@ def generate_launch_description():
         ]
     )
 
+    joy_params = PathJoinSubstitution(
+        [
+            FindPackageShare("teleop_twist_joy"),
+            "config",
+            "ps3.config.yaml",
+        ]
+    )
+
     # nodes
 
     control_node = Node(
@@ -79,12 +87,26 @@ def generate_launch_description():
          ]
     )
 
+    joy_node = Node(
+        package='joy_linux',
+        executable='joy_linux_node',
+    )
+
+    teleop_node = Node(
+        package='teleop_twist_joy',
+        executable='teleop_node',
+        parameters=[joy_params, {'publish_stamped_twist': 'false'}],
+        remappings=[('/cmd_vel', '/cmd_vel_joy')]
+    )
+
     nodes = [
         control_node,
         robot_state_pub_node,
         agv_broadcaster_spawner,
         agv_controller_spawner,
         twist_mux_node,
+        joy_node,
+        teleop_node,
     ]
 
     return LaunchDescription(nodes)
