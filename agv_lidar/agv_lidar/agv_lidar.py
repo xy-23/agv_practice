@@ -1,132 +1,173 @@
+import math
+import socket
+import struct
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
-import socket
-import struct
-import math
 
-MIN_ANGLE = math.radians(-90)
+
+MIN_ANGLE = math.radians(-90+45)
 
 
 class TCPNode(Node):
-    def __init__(self, ip_config="192.168.192.101", port_config=2111):
+    def __init__(self, host="192.168.192.101", port=2111):
         super().__init__("tcp_node")
-        self.publisher_ = self.create_publisher(LaserScan, "scan", 10)
-        # TCP connect
-        self.tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        host = ip_config
-        port = port_config
-        addr = (host, port)
-        self.tcp_client.connect(addr)
+
+        self.publisher = self.create_publisher(LaserScan, "scan", 10)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((host, port))
 
         self.login()
-        self.start_recv = False
+        self.set_frq_res(30, 0.1)
+        self.set_degrees(0+45, 180-45)
+        self.start()
 
         timer_period = 0.001  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-    def timer_callback(self):
-        self.rospc_transformer()
+    def send(self, data: bytes):
+        """blocking until data sent"""
+        total_sent = 0
 
-    def send_data(self, data):
-        self.tcp_client.send(data)
+        while total_sent < len(data):
+            sent = self.sock.send(data[total_sent:])
+            if sent == 0:
+                raise RuntimeError("Failed to send!")
+            total_sent += sent
 
-    def recv_data(self, buffer_size=1024):
-        return self.tcp_client.recv(buffer_size).hex()
+    def recv(self, size) -> bytes:
+        """blocking until size reached"""
+        received = b""
+
+        while len(received) < size:
+            data = self.sock.recv(size - len(received))
+            if data == b"":
+                raise RuntimeError("Failed to receive!")
+            received += data
+
+        return received
 
     def login(self):
-        self.get_logger().info("Trying to log in...\n")
-        data = b"\x02\x02\x02\x02\x00\x0E\x02\x01\x03\xF4\x72\x47\x44\x0D"
-        self.send_data(data)
-        msg = self.recv_data()
-        self.get_logger().info(f"Received log in message: {msg}\n")
+        SUCCESS = b"\x02\x02\x02\x02\x00\x0A\x12\x01\x01\x26"
 
-        data = (
-            b"\x02\x02\x02\x02\x00\x12\x01\x1B\x01"
-            # + b"\xff\xf9\xe5\x80"  # -40 degree * 10000 in complement code
-            + b"\x00\x00\x00\x00"
-            # + b"\x00\x21\x91\xc0"  # 220 degree * 10000 in complement code
-            + b"\x00\x1b\x77\x40"
-            # + b"\x06"  # checksum
-            + b"\x09"
-        )
-        self.send_data(data)
-        msg = self.recv_data()
-        self.get_logger().info(f"Received log in message: {msg}\n")
+        self.send(b"\x02\x02\x02\x02\x00\x0E\x02\x01\x03\xF4\x72\x47\x44\x0D")
+        reply = self.recv(len(SUCCESS))
+
+        if reply == SUCCESS:
+            self.get_logger().info("Login succeed.")
+        else:
+            raise RuntimeError(f"Failed to login: {reply.hex()}")
 
     def logout(self):
-        if self.start_recv:
-            self.get_logger().info("Trying to cancel acception...\n")
-            data = b"\x02\x02\x02\x02\x00\x0a\x02\x31\x01\x45"
-            self.send_data(data)
-            msg = self.recv_data()
-            self.get_logger().info(f"Received acception cancel message: {msg}\n")
+        pass
 
-        self.get_logger().info("Trying to log out...\n")
-        data = b"\x02\x02\x02\x02\x00\x09\x02\x02\x15"
-        self.send_data(data)
-        msg = self.recv_data()
-        self.get_logger().info(f"Received log out message: {msg}\n")
+    def set_frq_res(self, scan_frq, degree_res):
+        request = (
+            b"\x02\x02\x02\x02"+ b"\x00\x0D" + b"\x01" + b"\x19"
+            + struct.pack(">H", int(scan_frq * 100))
+            + struct.pack(">H", int(degree_res * 10000))
+        )
 
-    def rospc_transformer(self):
-        if not self.start_recv:
-            self.acc_init()
-            self.start_recv = True
+        checksum = struct.pack(">B", sum(request) & 0xFF)
+        request += checksum
 
-        header = self.tcp_client.recv(4)
+        self.send(request)
+        reply = self.recv(len(request))
+        self.get_logger().info(f"reque of set_frq_res: {request.hex()}")
+        self.get_logger().info(f"Reply of set_frq_res: {reply.hex()}")
 
-        if header.hex() != "02020202":
-            return
+    def set_degrees(self, start, end):
+        request = (
+            b"\x02\x02\x02\x02\x00\x12\x01\x1B\x01"
+            + struct.pack(">i", int(start * 10000))
+            + struct.pack(">i", int(end * 10000))
+        )
 
-        length = int(self.tcp_client.recv(2).hex(), 16)
-        data = self.tcp_client.recv(length - 6)
+        checksum = struct.pack(">B", sum(request) & 0xFF)
+        request += checksum
 
-        exe, cmd, info, scan_cnt, frame_i, scan_f, angle_res, N, i, n = struct.unpack(
+        self.send(request)
+        reply = self.recv(len(request))
+        self.get_logger().info(f"reque of set_frq_res: {request.hex()}")
+        self.get_logger().info(f"Reply of set_degrees: {reply.hex()}")
+
+    def start(self):
+        SUCCESS = b"\x02\x02\x02\x02\x00\x0A\x12\x31\x01\x56"
+
+        self.send(b"\x02\x02\x02\x02\x00\x0a\x02\x31\x01\x46")
+        reply = self.recv(len(SUCCESS))
+
+        if reply == SUCCESS:
+            self.get_logger().info("Start succeed.")
+        else:
+            raise RuntimeError(f"Failed to start: {reply.hex()}")
+
+    def timer_callback(self):
+        try:
+            self.recv_loop()
+        except Exception as e:
+            self.get_logger().warn(f'Failed in recv_loop: {e}')
+
+    def recv_loop(self):
+        self.wait_header()
+
+        length_raw = self.recv(2)
+        length = struct.unpack(">H", length_raw)[0]
+        data = self.recv(length - 6)  # header + length = 6
+
+        total = b"\x02\x02\x02\x02" + length_raw + data
+        checksum = sum(total[:-1]) & 0xFF
+        if total[-1] != checksum:
+            raise RuntimeError(f"Failed to checksum!")
+
+        op, cmd, info, scan_cnt, frame_i, scan_frq, angle_res, N, i, n = struct.unpack(
             ">BBBHBHHHHH", data[:16]
         )
 
-        if frame_i == 0:
-            self._point_cnt = 0
-            self._ranges = []
-            self._intensities = []
-
-        self._point_cnt += n
-
-        scan_f /= 1e2
+        scan_frq /= 1e2
         angle_res = math.radians(angle_res / 1e4)
         scans = struct.unpack(">" + "H" * 2 * n, data[16:-11])
-        self._ranges += [scans[i] / 1e3 for i in range(0, len(scans), 2)]
-        self._intensities += [scans[i] / 1.0 for i in range(1, len(scans), 2)]
 
-        if self._point_cnt == N:
+        if frame_i == 0:
+            self.last_i = -1
+            self.point_cnt = 0
+            self.ranges = []
+            self.intensities = []
+            self.stamp = self.get_clock().now().to_msg()
+
+        if frame_i != self.last_i + 1:
+            return
+        
+        self.last_i = frame_i
+        self.point_cnt += n
+        self.ranges += [scans[i] / 1e3 for i in range(0, len(scans), 2)]
+        self.intensities += [scans[i] / 1.0 for i in range(1, len(scans), 2)]
+
+        if self.point_cnt == N:
             lidar_msg = LaserScan()
-            lidar_msg.header.stamp = self.get_clock().now().to_msg()
+            lidar_msg.header.stamp = self.stamp
             lidar_msg.header.frame_id = "laser_frame"
             lidar_msg.angle_increment = angle_res
             lidar_msg.angle_min = MIN_ANGLE
             lidar_msg.angle_max = angle_res * (N - 1) + MIN_ANGLE
-            lidar_msg.scan_time = 0.033
+            lidar_msg.scan_time = 1 / scan_frq
             lidar_msg.time_increment = 1 / 108e3
             lidar_msg.range_min = 0.1
             lidar_msg.range_max = 40.0
-            lidar_msg.ranges = self._ranges
-            lidar_msg.intensities = self._intensities
-            self.publisher_.publish(lidar_msg)
+            lidar_msg.ranges = self.ranges
+            lidar_msg.intensities = self.intensities
+            self.publisher.publish(lidar_msg)
+            self.get_logger().info("Publish succeed.")
 
-    def acc_init(self):
-        self.get_logger().info("Trying to receive lidar data...\n")
-        data = b"\x02\x02\x02\x02\x00\x0a\x02\x31\x01\x46"
-        self.send_data(data)
-        self.recv_data()
-
-    def shutdown(self):
-        self.logout()
-        self.tcp_client.close()
-        self.get_logger().info("Lidar data node shut down.\n")
-
-    def destroy_node(self):
-        self.logout()
-        super().destroy_node()
+    def wait_header(self):
+        count = 0
+        while count < 4:
+            data = self.recv(1)
+            if data == b"\x02":
+                count += 1
+            else:
+                count = 0
 
 
 def main(args=None):
