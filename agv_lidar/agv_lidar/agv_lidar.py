@@ -4,6 +4,7 @@ import struct
 
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import ExternalShutdownException
 from sensor_msgs.msg import LaserScan
 
 
@@ -176,9 +177,14 @@ class TCPNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     tcp_node = TCPNode()
-    rclpy.spin(tcp_node)
-    tcp_node.destroy_node()
-    rclpy.shutdown()
+
+    try:
+        rclpy.spin(tcp_node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
+    finally:
+        tcp_node.destroy_node()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":
