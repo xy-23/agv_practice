@@ -7,9 +7,6 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 
 
-MIN_ANGLE = math.radians(-90+45)
-
-
 class TCPNode(Node):
     def __init__(self, host="192.168.192.101", port=2111):
         super().__init__("tcp_node")
@@ -18,9 +15,12 @@ class TCPNode(Node):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((host, port))
 
+        self.min_degrees = -45
+        self.max_degrees = 45
+
         self.login()
         self.set_frq_res(30, 0.1)
-        self.set_degrees(0+45, 180-45)
+        self.set_degrees(self.min_degrees, self.max_degrees)
         self.start()
 
         timer_period = 0.001  # seconds
@@ -78,6 +78,9 @@ class TCPNode(Node):
         self.get_logger().info(f"Reply of set_frq_res: {reply.hex()}")
 
     def set_degrees(self, start, end):
+        start += 90
+        end += 90
+
         request = (
             b"\x02\x02\x02\x02\x00\x12\x01\x1B\x01"
             + struct.pack(">i", int(start * 10000))
@@ -149,8 +152,8 @@ class TCPNode(Node):
             lidar_msg.header.stamp = self.stamp
             lidar_msg.header.frame_id = "laser_frame"
             lidar_msg.angle_increment = angle_res
-            lidar_msg.angle_min = MIN_ANGLE
-            lidar_msg.angle_max = angle_res * (N - 1) + MIN_ANGLE
+            lidar_msg.angle_min = math.radians(self.min_degrees)
+            lidar_msg.angle_max = angle_res * (N - 1) + math.radians(self.min_degrees)
             lidar_msg.scan_time = 1 / scan_frq
             lidar_msg.time_increment = 1 / 108e3
             lidar_msg.range_min = 0.1
