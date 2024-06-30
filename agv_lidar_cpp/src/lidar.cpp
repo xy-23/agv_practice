@@ -37,7 +37,7 @@ void Lidar::start_recv()
   std::cout << "start_recv success" << std::endl;
 }
 
-void Lidar::recv_loop()
+bool Lidar::recv_loop()
 {
   sync_header();
 
@@ -62,28 +62,39 @@ void Lidar::recv_loop()
   auto point_i = to_uint16(&(buff_[18]));
   auto points_per_frame = to_uint16(&(buff_[20]));
 
-  if (points_per_scan > MAX_POINTS)
-    throw std::runtime_error("invalid points_per_scan: " + std::to_string(points_per_scan));
-
   if (frame_i == 0) {
     last_frame_i_ = -1;
     last_scan_i_ = scan_i;
     points_received = 0;
   }
 
-  if (last_frame_i_ + 1 != frame_i || last_scan_i_ != scan_i) return;
+  if (last_frame_i_ + 1 != frame_i || last_scan_i_ != scan_i) return false;
+
   last_frame_i_ = frame_i;
+  angle_res_ = angle_res;
+  scan_frq_ = scan_frq;
+
+  if (points_per_scan != ranges_.size()) {
+    ranges_.resize(points_per_scan);
+    intensities_.resize(points_per_scan);
+  }
 
   for (int i = 0; i < points_per_frame; i++) {
-    ranges_[point_i + i] = to_uint16(&(buff_[22 + i])) / 1e3;
-    intensities_[point_i + i] = to_uint16(&(buff_[22 + i + 2]));
+    ranges_[point_i + i] = to_uint16(&(buff_[22 + 4 * i])) / 1e3;
+    intensities_[point_i + i] = to_uint16(&(buff_[24 + 4 * i]));
   }
 
   points_received += points_per_frame;
-  if (points_received == points_per_scan) {
-    std::cout << "published\n";
-  }
+  return points_received == points_per_scan;
 }
+
+float Lidar::angle_res() { return angle_res_; }
+
+float Lidar::scan_frq() { return scan_frq_; }
+
+std::vector<float> Lidar::ranges() { return ranges_; }
+
+std::vector<float> Lidar::intensities() { return intensities_; }
 
 void Lidar::read(uint8_t * bytes, std::size_t size)
 {
