@@ -5,4 +5,4 @@ export ROS_DOMAIN_ID=1
 export FASTRTPS_DEFAULT_PROFILES_FILE=/agv_ws/src/agv_practice/whitelist.xml 
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp 
 
-ros2 run agv_lidar tcp_client
+ros2 run agv_lidar_cpp lidar_node

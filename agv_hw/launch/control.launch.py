@@ -95,7 +95,7 @@ def generate_launch_description():
     teleop_node = Node(
         package='teleop_twist_joy',
         executable='teleop_node',
-        parameters=[joy_params, {'publish_stamped_twist': 'false'}],
+        parameters=[joy_params, {'publish_stamped_twist': False}],
         remappings=[('/cmd_vel', '/cmd_vel_joy')]
     )
 
