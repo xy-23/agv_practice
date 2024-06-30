@@ -14,8 +14,7 @@ class Lidar
 public:
   Lidar(std::string host = "192.168.192.101", in_port_t port = 2111);
 
-  void start_recv();
-  bool recv_loop();
+  bool scan();
 
   float angle_res();
   float scan_frq();
@@ -26,7 +25,7 @@ private:
   sockpp::tcp_connector sock_;
   uint8_t buff_[BUFF_SIZE];
 
-  float angle_res_;
+  float degree_res_;
   float scan_frq_;
   std::vector<float> ranges_;
   std::vector<float> intensities_;
@@ -43,6 +42,7 @@ private:
   uint8_t check(uint8_t * bytes, std::size_t size);
 
   void login();
+  void start_recv();
   void sync_header();
 };
 

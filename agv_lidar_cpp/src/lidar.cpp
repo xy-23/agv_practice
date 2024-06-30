@@ -18,6 +18,7 @@ Lidar::Lidar(std::string host, in_port_t port)
   if (!sock_) throw std::runtime_error("failed to open socket!");
 
   login();
+  start_recv();
 }
 
 void Lidar::start_recv()
@@ -37,7 +38,7 @@ void Lidar::start_recv()
   std::cout << "start_recv success" << std::endl;
 }
 
-bool Lidar::recv_loop()
+bool Lidar::scan()
 {
   sync_header();
 
@@ -57,7 +58,7 @@ bool Lidar::recv_loop()
   auto scan_i = to_uint16(&(buff_[9]));
   auto frame_i = buff_[11];
   auto scan_frq = to_uint16(&(buff_[12])) / 1e2;
-  auto angle_res = to_uint16(&(buff_[14])) / 1e4 / 180.0 * M_PI;
+  auto degree_res = to_uint16(&(buff_[14])) / 1e4;
   auto points_per_scan = to_uint16(&(buff_[16]));
   auto point_i = to_uint16(&(buff_[18]));
   auto points_per_frame = to_uint16(&(buff_[20]));
@@ -71,7 +72,7 @@ bool Lidar::recv_loop()
   if (last_frame_i_ + 1 != frame_i || last_scan_i_ != scan_i) return false;
 
   last_frame_i_ = frame_i;
-  angle_res_ = angle_res;
+  degree_res_ = degree_res;
   scan_frq_ = scan_frq;
 
   if (points_per_scan != ranges_.size()) {
@@ -88,7 +89,7 @@ bool Lidar::recv_loop()
   return points_received == points_per_scan;
 }
 
-float Lidar::angle_res() { return angle_res_; }
+float Lidar::angle_res() { return degree_res_ / 180.0 * M_PI; }
 
 float Lidar::scan_frq() { return scan_frq_; }
 
