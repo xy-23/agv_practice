@@ -18,24 +18,8 @@ Lidar::Lidar(std::string host, in_port_t port)
   if (!sock_) throw std::runtime_error("failed to open socket!");
 
   login();
+  set_degrees(-90, 90);
   start_recv();
-}
-
-void Lidar::start_recv()
-{
-  std::vector<uint8_t> success = {0x02, 0x02, 0x02, 0x02, 0x00, 0x0A, 0x12, 0x31, 0x01, 0x56};
-  std::vector<uint8_t> request = {0x02, 0x02, 0x02, 0x02, 0x00, 0x0a, 0x02, 0x31, 0x01, 0x46};
-
-  write(request);
-
-  std::vector<uint8_t> reply(success.size());
-  read(reply.data(), reply.size());
-
-  std::cout << "start_recv reply: ";
-  print(reply.data(), reply.size());
-
-  if (reply != success) throw std::runtime_error("failed to start_recv!");
-  std::cout << "start_recv success" << std::endl;
 }
 
 bool Lidar::scan()
@@ -89,6 +73,10 @@ bool Lidar::scan()
   return points_received == points_per_scan;
 }
 
+float Lidar::angle_min() { return min_degree_ / 180.0 * M_PI; }
+
+float Lidar::angle_max() { return max_degree_ / 180.0 * M_PI; }
+
 float Lidar::angle_res() { return degree_res_ / 180.0 * M_PI; }
 
 float Lidar::scan_frq() { return scan_frq_; }
@@ -109,7 +97,7 @@ void Lidar::print(uint8_t * bytes, std::size_t size)
   for (std::size_t i = 0; i < size; i++) {
     std::cout.fill('0');
     std::cout.width(2);
-    std::cout << std::to_string(bytes[i]) << " ";
+    std::cout << static_cast<int>(bytes[i]) << " ";
   }
   std::cout << std::dec << "\n";
 }
@@ -120,9 +108,17 @@ void Lidar::write(const std::vector<uint8_t> & bytes)
   if (n != bytes.size()) throw std::runtime_error("failed to write!");
 }
 
+void Lidar::to_bytes(int32_t value, uint8_t * bytes)
+{
+  bytes[0] = (value >> 24) & 0xFF;
+  bytes[1] = (value >> 16) & 0xFF;
+  bytes[2] = (value >> 8) & 0xFF;
+  bytes[3] = value & 0xFF;
+}
+
 uint16_t Lidar::to_uint16(uint8_t * bytes)
 {
-  return static_cast<uint16_t>(bytes[0] << 8 | bytes[1]);
+  return (static_cast<uint16_t>(bytes[0]) << 8) | static_cast<uint16_t>(bytes[1]);
 }
 
 uint8_t Lidar::check(uint8_t * bytes, std::size_t size)
@@ -148,6 +144,53 @@ void Lidar::login()
 
   if (reply != success) throw std::runtime_error("failed to login!");
   std::cout << "login success" << std::endl;
+}
+
+void Lidar::set_degrees(float min_degree, float max_degree)
+{
+  int32_t start = (min_degree + 90) * 1e4;
+  uint8_t starts[4];
+  to_bytes(start, starts);
+
+  int32_t end = (max_degree + 90) * 1e4;
+  uint8_t ends[4];
+  to_bytes(end, ends);
+
+  std::vector<uint8_t> request = {0x02,      0x02,    0x02,    0x02,      0x00,      0x12,
+                                  0x01,      0x1B,    0x01,    starts[0], starts[1], starts[2],
+                                  starts[3], ends[0], ends[1], ends[2],   ends[3]};
+  auto checksum = check(request.data(), request.size());
+  request.push_back(checksum);
+
+  write(request);
+
+  std::vector<uint8_t> reply(request.size());
+  read(reply.data(), reply.size());
+
+  std::cout << "set_degrees reply: ";
+  print(reply.data(), reply.size());
+
+  // TODO check reply
+
+  min_degree_ = min_degree;
+  max_degree_ = max_degree;
+}
+
+void Lidar::start_recv()
+{
+  std::vector<uint8_t> success = {0x02, 0x02, 0x02, 0x02, 0x00, 0x0A, 0x12, 0x31, 0x01, 0x56};
+  std::vector<uint8_t> request = {0x02, 0x02, 0x02, 0x02, 0x00, 0x0a, 0x02, 0x31, 0x01, 0x46};
+
+  write(request);
+
+  std::vector<uint8_t> reply(success.size());
+  read(reply.data(), reply.size());
+
+  std::cout << "start_recv reply: ";
+  print(reply.data(), reply.size());
+
+  if (reply != success) throw std::runtime_error("failed to start_recv!");
+  std::cout << "start_recv success" << std::endl;
 }
 
 void Lidar::sync_header()

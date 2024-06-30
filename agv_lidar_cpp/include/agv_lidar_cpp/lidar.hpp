@@ -16,6 +16,8 @@ public:
 
   bool scan();
 
+  float angle_min();
+  float angle_max();
   float angle_res();
   float scan_frq();
   std::vector<float> ranges();
@@ -25,6 +27,8 @@ private:
   sockpp::tcp_connector sock_;
   uint8_t buff_[BUFF_SIZE];
 
+  float min_degree_;
+  float max_degree_;
   float degree_res_;
   float scan_frq_;
   std::vector<float> ranges_;
@@ -38,10 +42,12 @@ private:
   void print(uint8_t * bytes, std::size_t size);
   void write(const std::vector<uint8_t> & bytes);
 
+  void to_bytes(int32_t value, uint8_t * bytes);
   uint16_t to_uint16(uint8_t * bytes);
   uint8_t check(uint8_t * bytes, std::size_t size);
 
   void login();
+  void set_degrees(float min_degree, float max_degree);
   void start_recv();
   void sync_header();
 };

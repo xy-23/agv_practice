@@ -29,7 +29,8 @@ private:
 
     msg.header.stamp = this->now();
     msg.header.frame_id = "laser_frame";
-    msg.angle_min = -135.0 / 180.0 * M_PI;
+    msg.angle_min = lidar_.angle_min();
+    msg.angle_max = lidar_.angle_max();
     msg.angle_increment = lidar_.angle_res();
     msg.time_increment = 1.0 / 108e3;
     msg.scan_time = 1.0 / lidar_.scan_frq();
