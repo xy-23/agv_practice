@@ -1,8 +1,8 @@
 #include <chrono>
 #include <memory>
-#include <thread>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include <thread>
 
 #include "agv_lidar_cpp/lidar.hpp"
 
@@ -13,7 +13,8 @@ class LidarNode : public rclcpp::Node
 public:
   LidarNode() : Node("lidar_node")
   {
-    publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", 10);
+    publisher_ =
+      this->create_publisher<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS());
 
     lidar_ = std::make_unique<io::Lidar>();
 
