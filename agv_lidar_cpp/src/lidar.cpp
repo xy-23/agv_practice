@@ -48,6 +48,7 @@ bool Lidar::scan()
   auto points_per_frame = to_uint16(&(buff_[20]));
 
   if (frame_i == 0) {
+    stamp_ = rclcpp::Clock().now();
     last_frame_i_ = -1;
     last_scan_i_ = scan_i;
     points_received = 0;
@@ -72,6 +73,8 @@ bool Lidar::scan()
   points_received += points_per_frame;
   return points_received == points_per_scan;
 }
+
+rclcpp::Time Lidar::stamp() { return stamp_; }
 
 float Lidar::angle_min() { return min_degree_ / 180.0 * M_PI; }
 

@@ -3,6 +3,7 @@
 
 #include <sockpp/tcp_connector.h>
 
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 
 namespace io
@@ -16,6 +17,7 @@ public:
 
   bool scan();
 
+  rclcpp::Time stamp();
   float angle_min();
   float angle_max();
   float angle_res();
@@ -27,6 +29,7 @@ private:
   sockpp::tcp_connector sock_;
   uint8_t buff_[BUFF_SIZE];
 
+  rclcpp::Time stamp_;
   float min_degree_;
   float max_degree_;
   float degree_res_;

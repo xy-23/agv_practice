@@ -43,7 +43,7 @@ private:
 
     auto msg = sensor_msgs::msg::LaserScan();
 
-    msg.header.stamp = this->now();
+    msg.header.stamp = lidar_->stamp();
     msg.header.frame_id = "laser_frame";
     msg.angle_min = lidar_->angle_min();
     msg.angle_max = lidar_->angle_max();
